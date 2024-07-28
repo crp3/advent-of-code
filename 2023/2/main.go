@@ -43,15 +43,21 @@ func validateSubsets(subSets string) (bool, int) {
 	return valid, powerColor
 }
 
-func validateGame(readLine string) (int, int) {
+func validateGame(readLine string, resultChan chan result) {
 	split := strings.Split(readLine, ":")
 	gameIDStr, subSets := split[0], split[1]
 	id, _ := strconv.Atoi(strings.Split(gameIDStr, " ")[1])
 	valid, power := validateSubsets(strings.Trim(subSets, " "))
 	if valid {
-		return id, power
+		resultChan <- result{id, power}
+	} else {
+		resultChan <- result{0, power}
 	}
-	return 0, power
+}
+
+type result struct {
+	gameID   int
+	powerSet int
 }
 
 func main() {
@@ -59,11 +65,13 @@ func main() {
 	reader := bufio.NewScanner(file)
 	var gameIDResult int
 	var powerResult int
+	resultChan := make(chan result)
 
 	for reader.Scan() {
-		id, power := validateGame(reader.Text())
-		gameIDResult += id
-		powerResult += power
+		go validateGame(reader.Text(), resultChan)
+		result := <-resultChan
+		gameIDResult += result.gameID
+		powerResult += result.powerSet
 	}
 	fmt.Println("gameID sums: ", gameIDResult)
 	fmt.Println("power sums: ", powerResult)
