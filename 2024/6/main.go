@@ -14,6 +14,12 @@ func printGrid(grid [][]rune) {
 	fmt.Println("")
 }
 
+type CoordPlusDirection struct {
+	X         int
+	Y         int
+	Direction int
+}
+
 func main() {
 	file, _ := os.Open("input.txt")
 	reader := bufio.NewScanner(file)
@@ -32,8 +38,8 @@ func main() {
 	}
 	currentX, currentY := initX, initY
 	total := 0
+	totalSecond := 0
 	for currentX < len(grid) && currentX >= 0 && currentY < len(grid[0]) && currentY >= 0 {
-		printGrid(grid)
 		switch grid[currentX][currentY] {
 		case '^':
 			if currentX == 0 {
@@ -98,7 +104,35 @@ func main() {
 		}
 	}
 
-	printGrid(grid)
+	for obstacleX := range grid {
+		for obstacleY := range grid[0] {
+			currentX, currentY := initX, initY
+			direction := 0
+			seen := make(map[CoordPlusDirection]bool)
+			for true {
+				coordPlus := CoordPlusDirection{
+					currentX,
+					currentY,
+					direction,
+				}
+				if seen[coordPlus] {
+					totalSecond += 1
+					break
+				}
+				seen[coordPlus] = true
+				newDirection := [][]int{{-1, 0}, {0, 1}, {1, 0}, {0, -1}}[direction]
+				newX, newY := currentX+newDirection[0], currentY+newDirection[1]
+				if newX < 0 || newX >= len(grid) || newY < 0 || newY >= len(grid) {
+					break
+				}
+				if grid[newX][newY] == '#' || newX == obstacleX && newY == obstacleY {
+					direction = (direction + 1) % 4
+				} else {
+					currentX, currentY = newX, newY
+				}
+			}
+		}
+	}
 	for _, line := range grid {
 		for _, rn := range line {
 			if rn == 'X' {
@@ -107,4 +141,5 @@ func main() {
 		}
 	}
 	fmt.Println(total)
+	fmt.Println(totalSecond)
 }
